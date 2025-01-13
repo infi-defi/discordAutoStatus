@@ -1,68 +1,85 @@
 import time
 import os
+import json
 from tkinter import Tk, StringVar, OptionMenu, Button, Label
 from pypresence import Presence
 
-def initialize_config():
-    if not os.path.exists("options.txt"):
-        with open("options.txt", "w") as f:
-            f.write('Client_ID = "YOUR_CLIENT_ID"\n')
-            f.write('options = option1,option2,option3\n')
+CONFIG_FILE = "config.json"
 
+# Generate config file.
+def initialize_config():
+    if not os.path.exists(CONFIG_FILE):
+        default_config = {
+            "clients": [
+                {"client_id": "Client_ID_1", "name": "Coding"},
+                {"client_id": "Client_ID_2", "name": "Chilling"}
+            ],
+            "description": "hot diggity dog I surely do love rich presence"
+        }
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(default_config, f, indent=4)
+
+# Loads config file
 def load_config():
-    client_id = ""
-    options = []
-    with open("options.txt", "r") as f:
-        lines = f.readlines()
-        for line in lines:
-            if line.startswith("Client_ID"):
-                client_id = line.split("=")[1].strip().strip('"')
-            elif line.startswith("options"):
-                options = line.split("=")[1].strip().split(",")
-    return client_id, options
+    with open(CONFIG_FILE, "r") as f:
+        data = json.load(f)
+    return data["clients"], data["description"]
 
 initialize_config()
-CLIENT_ID, options = load_config()
+clients, description = load_config()
 
-RPC = Presence(CLIENT_ID)
-RPC.connect()
+if not clients:
+    raise ValueError("No Client IDs found in config.json!")
 
-def update_status(selected_option):
-    """Update Discord Rich Presence with the selected option."""
+current_client_index = 0
+RPC = None
+
+# Reconnect
+def connect_rpc(client_index):
+    global RPC, current_client_index
+    current_client_index = client_index  
+    if RPC:
+        RPC.clear()
+    RPC = Presence(clients[client_index]["client_id"])
+    RPC.connect()
+
+connect_rpc(current_client_index)  
+
+# Update
+def update_status(selected_name):
+    client_index = next((i for i, c in enumerate(clients) if c["name"] == selected_name), 0)
+    if client_index != current_client_index:
+        connect_rpc(client_index)  
+
     RPC.update(
-        state=f"hot diggity dog I surely do love {selected_option}", #change prefix to the option here.
-        large_image="coding_logo",  # Add assets in the dev portal
+        state=description,
+        large_image="coding_logo",  
         start=time.time()
     )
-    status_label.config(text=f"Updated to: {selected_option}")
+    status_label.config(text=f"Updated to: {selected_name} (App ID: {clients[client_index]['client_id']})")
 
 def close_app():
-    """Closes the application and stops Rich Presence."""
     RPC.clear()
     app.destroy()
 
-#gui
+# GUI
 app = Tk()
 app.title("Discord Rich Presence Updater")
 app.geometry("400x200")
 
-#dropdown
 selected_option = StringVar(app)
-selected_option.set(options[0])  # Default value
-dropdown = OptionMenu(app, selected_option, *options)
+selected_option.set(clients[0]["name"])  
+
+dropdown = OptionMenu(app, selected_option, *[c["name"] for c in clients])
 dropdown.pack(pady=20)
 
-#update button
 update_button = Button(app, text="Update Status", command=lambda: update_status(selected_option.get()))
 update_button.pack(pady=10)
 
-#close button
 close_button = Button(app, text="Close", command=close_app)
 close_button.pack(pady=10)
 
-#status label
-status_label = Label(app, text="Select an option and update your status.")
+status_label = Label(app, text="Select an application and update your status.")
 status_label.pack(pady=10)
 
-#run the app and pray :praying_emoji"
 app.mainloop()

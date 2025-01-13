@@ -51,33 +51,35 @@ This is a simple Python application that allows you to update your Discord Rich 
 
 ## Configuration
 
-The application reads configuration settings from the `options.txt` file. This file is automatically created if it doesn't exist. The `options.txt` file should contain the following format:
+The application reads configuration settings from `config.json`. If this file doesn't exist, it is automatically created with default values.
 
+### Example `config.json`
+```json
+{
+    "clients": [
+        { "client_id": "Client_ID_1", "name": "Coding" },
+        { "client_id": "Client_ID_2", "name": "Chilling" }
+    ],
+    "description": "hot diggity dog I surely do love rich presence"
+}
 ```
-Client_ID = "YOUR_CLIENT_ID"
-options = option1,option2,option3
-```
 
-### `Client_ID`
-Replace `"YOUR_CLIENT_ID"` with your actual Discord client ID. You can obtain this by creating an application in the [Discord Developer Portal](https://discord.com/developers/applications) and copying the "Client ID" from your application.
+### Explanation:
+- **`clients`**: A list of Discord applications, each containing:
+  - `client_id`: The Application ID from the [Discord Developer Portal](https://discord.com/developers/applications).
+  - `name`: The name that appears in the dropdown menu.
+- **`description`**: The status message that remains static for all selected applications.
 
-### `options`
-This is a comma-separated list of options that will be available in the dropdown menu for updating your Discord status. For example, `options = coding, gaming, listening to music`.
 
 ## Running the Application
 
-To run the application, execute the following command in your terminal:
+To start the application, run:
 
 ```bash
 python3 discord_rich_presence_updater.py
 ```
 
-Make sure that your `options.txt` file is properly set up, and the application will open a window with the dropdown menu and buttons.
-
-## Troubleshooting
-
-- If you're having trouble connecting to Discord, ensure that your `Client_ID` is correctly set in `options.txt`.
-- If the dropdown options don't appear, check the `options.txt` file for any syntax errors or missing values. Follow the given example. If its too broken to be fixed delete it, run the app again and it should reset.
+The app will open a window where you can select an application from the dropdown menu and update your Rich Presence.
 
 ## License
 
